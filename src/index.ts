@@ -8,7 +8,9 @@ import { requireAuth } from './middleware/auth';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+// En dev no hay FRONTEND_URL seteada, así que acepta cualquier origen (igual
+// que antes). En producción se restringe al dominio real del frontend.
+app.use(cors(process.env.FRONTEND_URL ? { origin: process.env.FRONTEND_URL } : undefined));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
