@@ -28,7 +28,7 @@ Desplegado en **Render** (Web Service, plan Free), conectado al repo de GitHub p
 
 - **Build Command**: `npm install && npm run build && npx prisma migrate deploy`
 - **Start Command**: `npm run start`
-- **Variables de entorno de producción**: `DATABASE_URL` (misma base de Neon que desarrollo — es un proyecto de portafolio, no un producto con datos de clientes reales), `JWT_SECRET` (uno nuevo, distinto al de desarrollo), `FRONTEND_URL` (restringe CORS al dominio real de Vercel en vez de aceptar cualquier origen).
+- **Variables de entorno de producción**: `DATABASE_URL` (misma base de Neon que desarrollo — es un proyecto de portafolio, no un producto con datos de clientes reales), `JWT_SECRET` (uno nuevo, distinto al de desarrollo), `FRONTEND_URL` (restringe CORS al dominio real de Vercel en vez de aceptar cualquier origen), `SENTRY_DSN` (monitoreo de errores).
 
 ## Estado
 
@@ -38,4 +38,4 @@ Desplegado en **Render** (Web Service, plan Free), conectado al repo de GitHub p
 
 **Fase 5 completada:** deploy en Render (ver arriba). CORS configurable vía `FRONTEND_URL` y build script que corre `prisma generate` (necesario para que el cliente de Prisma no quede desactualizado en un build limpio). `bcrypt` actualizado a 6.0.0 por una vulnerabilidad crítica en una dependencia transitiva (`node-tar` vía `node-pre-gyp`).
 
-**Pulido post-Fase 5:** 19 tests de integración (Vitest + Supertest) cubriendo auth y CRUD de `/applications`, corriendo también en CI contra un Postgres real efímero. `src/app.ts` se separó de `src/index.ts` (la app de Express sin el `.listen()`) específicamente para poder testearla con Supertest sin levantar un puerto.
+**Pulido post-Fase 5:** 19 tests de integración (Vitest + Supertest) cubriendo auth y CRUD de `/applications`, corriendo también en CI contra un Postgres real efímero. `src/app.ts` se separó de `src/index.ts` (la app de Express sin el `.listen()`) específicamente para poder testearla con Supertest sin levantar un puerto. Monitoreo de errores en producción con **Sentry** (`src/instrument.ts`, cargado antes que cualquier otro módulo).
