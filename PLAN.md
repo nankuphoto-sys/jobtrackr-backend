@@ -37,6 +37,15 @@ Enfoque de aprendizaje: Jonta está aprendiendo a programar mientras construye e
 
 7. **Pulido post-Fase 5 — Tests del backend.** ✅ Completado. El backend no tenía ningún test automatizado (solo verificación manual), asimétrico con la cobertura completa del frontend. 19 tests de integración (Vitest + Supertest) contra la app real y una base de datos real: CRUD completo, validaciones, y aislamiento entre usuarios (que un usuario no pueda leer/editar/borrar postulaciones ajenas). `src/app.ts` se separó de `src/index.ts` para poder testear la app sin levantar un puerto. Corren también en CI, antes del smoke-test de `/health`.
 
+8. **Pulido post-Fase 5 — Monitoreo con Sentry.** ✅ Completado. Un proyecto por repo (`jobtrackr-frontend`, `jobtrackr-backend`) en la misma organización de Sentry. Setup manual (no el wizard) siguiendo la guía actual de cada SDK, que cambió bastante de lo esperado por versiones anteriores — en Next.js ahora es `instrumentation-client.ts` en vez del viejo `sentry.client.config.js`; en Express, un `instrument.ts` que se carga antes que cualquier otro módulo. Verificado con tráfico de red real (no solo que compile): se confirmó el evento llegando al ingest de Sentry en ambos casos, incluyendo contra las apps ya desplegadas en producción.
+
+9. **Pulido post-Fase 5 — Tipos de React.** ✅ Completado (frontend). `@types/react` había quedado en v18 desde antes de migrar a React 19 (Fase 2), y `@types/react-dom` nunca se instaló. No rompía nada, pero podía dar tipos sutilmente incorrectos. Corregido.
+
+## Pendiente (no hecho todavía)
+
+- **Dominio propio**: Jonta ya tiene un dominio comprado (lo usa para otro proyecto, "RIME") y preguntó si se puede reusar para JobTrackr — sí, vía subdominio (ej. `jobtrackr.sudominio.com` para el frontend, sin tocar lo que ya tiene en la raíz). Falta que confirme el nombre exacto del dominio para configurar los registros DNS en Vercel/Render.
+- Publicar el link en LinkedIn/GitHub — le corresponde a Jonta.
+
 ## Notas de contexto
 
 - Jonta también está en búsqueda activa de empleo remoto (ver tarea de LinkedIn) — este proyecto es parte de su portafolio para esas aplicaciones.
