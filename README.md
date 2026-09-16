@@ -18,6 +18,10 @@ API REST en Node.js + Express + TypeScript para JobTrackr, el tablero de seguimi
 4. `npm run dev` — el servidor queda en `http://localhost:4000`.
 5. Prueba `GET /health` — debería responder `{ "status": "ok" }`.
 
+## Tests
+
+`npm test` (Vitest + Supertest) — tests de integración reales contra la base de `DATABASE_URL` (no mockean Prisma): registro, login, CRUD completo de `/applications`, y aislamiento entre usuarios (que el usuario B no pueda leer, editar ni borrar una postulación del usuario A). Corren contra la misma base que uses en desarrollo; en CI corren contra un Postgres efímero aparte.
+
 ## Deploy
 
 Desplegado en **Render** (Web Service, plan Free), conectado al repo de GitHub para auto-deploy en cada push a `main`.
@@ -33,3 +37,5 @@ Desplegado en **Render** (Web Service, plan Free), conectado al repo de GitHub p
 **Fase 1 completada:** endpoints `/auth/register` y `/auth/login` (JWT + bcrypt), middleware `requireAuth`, y CRUD completo de `/applications` (scoped por usuario autenticado).
 
 **Fase 5 completada:** deploy en Render (ver arriba). CORS configurable vía `FRONTEND_URL` y build script que corre `prisma generate` (necesario para que el cliente de Prisma no quede desactualizado en un build limpio). `bcrypt` actualizado a 6.0.0 por una vulnerabilidad crítica en una dependencia transitiva (`node-tar` vía `node-pre-gyp`).
+
+**Pulido post-Fase 5:** 19 tests de integración (Vitest + Supertest) cubriendo auth y CRUD de `/applications`, corriendo también en CI contra un Postgres real efímero. `src/app.ts` se separó de `src/index.ts` (la app de Express sin el `.listen()`) específicamente para poder testearla con Supertest sin levantar un puerto.

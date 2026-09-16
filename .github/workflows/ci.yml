@@ -46,6 +46,9 @@ jobs:
       - name: Apply Prisma migrations against a real Postgres
         run: npx prisma migrate deploy
 
+      - name: Integration tests (auth + applications, against the real Postgres)
+        run: npm test
+
       - name: Start server and smoke-test /health
         run: |
           npm run dev &
