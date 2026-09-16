@@ -1,6 +1,6 @@
 # JobTrackr — Backend (API REST)
 
-API REST en Node.js + Express + TypeScript para JobTrackr, el tablero de seguimiento de postulaciones de empleo. Plan completo del proyecto: doc `plan-proyecto-portafolio-jobtrackr.md` en el proyecto "programacion".
+API REST en Node.js + Express + TypeScript para JobTrackr, el tablero de seguimiento de postulaciones de empleo. Plan completo del proyecto: [`PLAN.md`](./PLAN.md).
 
 ## Stack
 
