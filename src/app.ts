@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import * as Sentry from '@sentry/node';
 import authRouter from './routes/auth';
 import applicationsRouter from './routes/applications';
 import { requireAuth } from './middleware/auth';
@@ -19,3 +20,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/auth', authRouter);
 app.use('/applications', requireAuth, applicationsRouter);
+
+// Debe ir después de las rutas, y antes de cualquier otro middleware de errores.
+// No hace nada si Sentry.init() no corrió antes (ej. en los tests).
+Sentry.setupExpressErrorHandler(app);
