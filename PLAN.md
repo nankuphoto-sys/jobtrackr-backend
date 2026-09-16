@@ -21,7 +21,11 @@ Enfoque de aprendizaje: Jonta está aprendiendo a programar mientras construye e
    - Responsive: columnas de ancho fijo en una fila con scroll horizontal + `snap`, así en mobile se sienten swipeables sin código extra para ese caso.
    - Cobertura e2e: agrupación por columna, drag-and-drop real (mouse events, no HTML5 DnD nativo porque dnd-kit usa Pointer Events), y métricas.
 
-5. **Fase 4 — Pulido.** Manejo de errores (mensajes claros si la API falla), loading states (skeletons o spinners), accesibilidad básica (labels, contraste, navegación por teclado), QA en mobile real.
+5. **Fase 4 — Pulido.** ✅ Completada.
+   - Manejo de errores: se separó el error de carga inicial (bloqueaba y ocultaba todo el tablero — bug real) del error de una acción puntual (cambiar estado/borrar), que ahora se muestra como banner cerrable sin tapar el tablero. La carga inicial fallida ahora tiene botón "Reintentar".
+   - Accesibilidad: el `KeyboardSensor` de dnd-kit ya daba foco y anuncios de fábrica, pero el salto por defecto era de 25px por flecha (~12 pulsaciones para cruzar una columna de 288px) — se reemplazó por un `coordinateGetter` a medida que salta directo a la columna vecina. Los anuncios y las instrucciones para lectores de pantalla, en inglés por defecto, se tradujeron y ahora mencionan la empresa real en vez de un id. Contraste de color auditado con cálculo real de WCAG (no a ojo): dos textos (`gray-400`, `red-500`) no llegaban a AA y se ajustaron.
+   - QA en mobile real: las 6 pantallas revisadas a 375px con Chrome real vía Playwright, sin errores de consola ni de layout.
+   - Tests e2e nuevos para blindar estos fixes (no solo "se ve bien", sino que el mecanismo funciona): retry tras error de carga, banner de error no oculta el tablero, y drag por teclado con una sola flecha por columna.
 
 6. **Fase 5 — Deploy + documentación.** Frontend en Vercel, backend en Render (free tier), variables de entorno de producción. README en cada repo con capturas y link a la demo en vivo. Publicar en LinkedIn/GitHub como parte del portafolio.
 
