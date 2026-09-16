@@ -35,6 +35,8 @@ Enfoque de aprendizaje: Jonta está aprendiendo a programar mientras construye e
    - Flujo completo (registro → tablero → crear/editar/borrar) verificado con Playwright contra la app real en producción, no solo en local — incluyendo que el CORS restringido no rompió nada.
    - README de cada repo actualizado con el link a la demo, capturas de pantalla, y cómo está configurado el deploy.
 
+7. **Pulido post-Fase 5 — Tests del backend.** ✅ Completado. El backend no tenía ningún test automatizado (solo verificación manual), asimétrico con la cobertura completa del frontend. 19 tests de integración (Vitest + Supertest) contra la app real y una base de datos real: CRUD completo, validaciones, y aislamiento entre usuarios (que un usuario no pueda leer/editar/borrar postulaciones ajenas). `src/app.ts` se separó de `src/index.ts` para poder testear la app sin levantar un puerto. Corren también en CI, antes del smoke-test de `/health`.
+
 ## Notas de contexto
 
 - Jonta también está en búsqueda activa de empleo remoto (ver tarea de LinkedIn) — este proyecto es parte de su portafolio para esas aplicaciones.
