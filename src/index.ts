@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import authRouter from './routes/auth';
+import applicationsRouter from './routes/applications';
+import { requireAuth } from './middleware/auth';
 
 dotenv.config();
 
@@ -12,7 +15,8 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'jobtrackr-backend' });
 });
 
-// Fase 1: aquí construimos juntos las rutas de /auth y /applications
+app.use('/auth', authRouter);
+app.use('/applications', requireAuth, applicationsRouter);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

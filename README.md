@@ -20,4 +20,4 @@ API REST en Node.js + Express + TypeScript para JobTrackr, el tablero de seguimi
 
 **Fase 0 (setup) completada:** Express + TypeScript + Prisma configurados, modelos `User` y `JobApplication` definidos, endpoint `/health` funcionando.
 
-**Fase 1 (pendiente):** endpoints `/auth/register`, `/auth/login` (JWT + bcrypt) y CRUD de `/applications`.
+**Fase 1 completada:** endpoints `/auth/register` y `/auth/login` (JWT + bcrypt), middleware `requireAuth`, y CRUD completo de `/applications` (scoped por usuario autenticado).
