@@ -27,7 +27,13 @@ Enfoque de aprendizaje: Jonta está aprendiendo a programar mientras construye e
    - QA en mobile real: las 6 pantallas revisadas a 375px con Chrome real vía Playwright, sin errores de consola ni de layout.
    - Tests e2e nuevos para blindar estos fixes (no solo "se ve bien", sino que el mecanismo funciona): retry tras error de carga, banner de error no oculta el tablero, y drag por teclado con una sola flecha por columna.
 
-6. **Fase 5 — Deploy + documentación.** Frontend en Vercel, backend en Render (free tier), variables de entorno de producción. README en cada repo con capturas y link a la demo en vivo. Publicar en LinkedIn/GitHub como parte del portafolio.
+6. **Fase 5 — Deploy + documentación.** ✅ Desplegado y documentado (falta solo publicar el link en LinkedIn, que le corresponde a Jonta).
+   - Backend en Render (Web Service, plan Free), conectado a GitHub para auto-deploy: https://jobtrackr-backend-ul8d.onrender.com
+   - Frontend en Vercel (mismo auto-deploy vía GitHub): https://jobtrackr-frontend-two.vercel.app
+   - Variables de entorno de producción separadas de desarrollo: `JWT_SECRET` nuevo (no se reutilizó el de dev), `FRONTEND_URL` restringe CORS del backend al dominio real de Vercel (antes aceptaba cualquier origen).
+   - Se aprovechó para resolver una vulnerabilidad crítica real encontrada en el camino: `bcrypt@5.1.1` dependía de una versión vulnerable de `node-tar` (vía `node-pre-gyp`); `bcrypt@6.0.0` eliminó esa dependencia de raíz.
+   - Flujo completo (registro → tablero → crear/editar/borrar) verificado con Playwright contra la app real en producción, no solo en local — incluyendo que el CORS restringido no rompió nada.
+   - README de cada repo actualizado con el link a la demo, capturas de pantalla, y cómo está configurado el deploy.
 
 ## Notas de contexto
 
