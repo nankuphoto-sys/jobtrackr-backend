@@ -151,6 +151,50 @@ describe('PUT /applications/:id', () => {
   });
 });
 
+describe('GET /applications/status-history', () => {
+  it('registra la creación y cada cambio de estado', async () => {
+    const created = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'HistoryCo', role: 'Dev' });
+
+    await request(app)
+      .put(`/applications/${created.body.id}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ status: 'APLICADO' });
+
+    const res = await request(app).get('/applications/status-history').set('Authorization', `Bearer ${tokenA}`);
+    expect(res.status).toBe(200);
+
+    const entries = res.body.filter((c: { applicationId: string }) => c.applicationId === created.body.id);
+    expect(entries).toEqual([
+      expect.objectContaining({ fromStatus: null, toStatus: 'POR_APLICAR' }),
+      expect.objectContaining({ fromStatus: 'POR_APLICAR', toStatus: 'APLICADO' }),
+    ]);
+  });
+
+  it('no incluye una nueva entrada si el PUT no cambia el status', async () => {
+    const created = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'NoChangeCo', role: 'Dev' });
+
+    await request(app)
+      .put(`/applications/${created.body.id}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'NoChangeCo Renombrada' });
+
+    const res = await request(app).get('/applications/status-history').set('Authorization', `Bearer ${tokenA}`);
+    const entries = res.body.filter((c: { applicationId: string }) => c.applicationId === created.body.id);
+    expect(entries).toHaveLength(1);
+  });
+
+  it('rechaza sin token con 401', async () => {
+    const res = await request(app).get('/applications/status-history');
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('DELETE /applications/:id', () => {
   it('borra y después devuelve 404 al buscarla', async () => {
     const created = await request(app)

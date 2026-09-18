@@ -19,7 +19,7 @@ describe('POST /auth/register', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.token).toEqual(expect.any(String));
-    expect(res.body.user).toEqual({ id: expect.any(String), email });
+    expect(res.body.user).toEqual({ id: expect.any(String), email, name: null });
   });
 
   it('rechaza un email duplicado con 409', async () => {
@@ -79,5 +79,96 @@ describe('POST /auth/login', () => {
       .send({ email: testEmail('login-nouser'), password: 'lo-que-sea' });
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe('GET /auth/me', () => {
+  it('rechaza sin token con 401', async () => {
+    const res = await request(app).get('/auth/me');
+    expect(res.status).toBe(401);
+  });
+
+  it('devuelve el perfil del usuario autenticado', async () => {
+    const email = testEmail('me-ok');
+    const registered = await request(app).post('/auth/register').send({ email, password: 'secret123' });
+
+    const res = await request(app).get('/auth/me').set('Authorization', `Bearer ${registered.body.token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ id: registered.body.user.id, email, name: null, createdAt: expect.any(String) });
+  });
+});
+
+describe('PUT /auth/me', () => {
+  it('actualiza el nombre', async () => {
+    const email = testEmail('me-update');
+    const registered = await request(app).post('/auth/register').send({ email, password: 'secret123' });
+
+    const res = await request(app)
+      .put('/auth/me')
+      .set('Authorization', `Bearer ${registered.body.token}`)
+      .send({ name: 'Ana Ramírez' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Ana Ramírez');
+  });
+});
+
+describe('PUT /auth/password', () => {
+  it('rechaza si la contraseña actual no coincide', async () => {
+    const email = testEmail('pw-wrong');
+    const registered = await request(app).post('/auth/register').send({ email, password: 'secret123' });
+
+    const res = await request(app)
+      .put('/auth/password')
+      .set('Authorization', `Bearer ${registered.body.token}`)
+      .send({ currentPassword: 'no-es-esta', newPassword: 'nuevapass123' });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('cambia la contraseña y permite loguear con la nueva', async () => {
+    const email = testEmail('pw-ok');
+    const registered = await request(app).post('/auth/register').send({ email, password: 'secret123' });
+
+    const changed = await request(app)
+      .put('/auth/password')
+      .set('Authorization', `Bearer ${registered.body.token}`)
+      .send({ currentPassword: 'secret123', newPassword: 'nuevapass123' });
+    expect(changed.status).toBe(204);
+
+    const loginOld = await request(app).post('/auth/login').send({ email, password: 'secret123' });
+    expect(loginOld.status).toBe(401);
+
+    const loginNew = await request(app).post('/auth/login').send({ email, password: 'nuevapass123' });
+    expect(loginNew.status).toBe(200);
+  });
+});
+
+describe('DELETE /auth/me', () => {
+  it('rechaza si la contraseña no coincide', async () => {
+    const email = testEmail('delete-wrong');
+    const registered = await request(app).post('/auth/register').send({ email, password: 'secret123' });
+
+    const res = await request(app)
+      .delete('/auth/me')
+      .set('Authorization', `Bearer ${registered.body.token}`)
+      .send({ password: 'no-es-esta' });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('borra la cuenta y sus postulaciones, y deja de poder loguearse', async () => {
+    const email = testEmail('delete-ok');
+    const registered = await request(app).post('/auth/register').send({ email, password: 'secret123' });
+    const token = registered.body.token;
+
+    await request(app).post('/applications').set('Authorization', `Bearer ${token}`).send({ company: 'X', role: 'Y' });
+
+    const res = await request(app).delete('/auth/me').set('Authorization', `Bearer ${token}`).send({ password: 'secret123' });
+    expect(res.status).toBe(204);
+
+    const login = await request(app).post('/auth/login').send({ email, password: 'secret123' });
+    expect(login.status).toBe(401);
   });
 });
