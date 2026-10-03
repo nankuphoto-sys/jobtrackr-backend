@@ -1,0 +1,18 @@
+VACANTE: Desarrollador Python Junior
+
+Laboratorio Ánfora es una empresa de análisis de datos para el sector agrícola, con sede en Medellín.
+
+Buscamos una persona recién egresada o con hasta 1 año de experiencia para unirse a nuestro equipo de ingeniería. Trabajo presencial en nuestras oficinas de El Poblado, de lunes a viernes.
+
+Funciones
+• Desarrollar y mantener servicios internos en Python con Django.
+• Escribir consultas SQL sobre PostgreSQL.
+• Automatizar reportes y tareas repetitivas.
+
+Requisitos
+• Ingeniería de sistemas, carrera técnica o bootcamp.
+• Bases sólidas de Python.
+• Ganas de aprender y trabajar en equipo.
+• Deseable: conocimiento de Django REST Framework y Docker.
+
+Para postularte, envía tu hoja de vida al correo talento@laboratorioanfora.com.co con el asunto "Python Junior".

@@ -1,0 +1,20 @@
+Full Stack Developer (React + Python) — Contract
+
+Our client, a fast-growing fintech company in the healthcare payments space, is looking for a mid-level full stack developer to join their product team on a 6-month contract with possible extension.
+
+This is a remote role. Candidates must be able to overlap at least 4 hours with Eastern Time.
+
+Responsibilities:
+- Build features end to end with React on the frontend and Python (FastAPI) on the backend.
+- Write unit and integration tests.
+- Collaborate with product and design in two-week sprints.
+
+Requirements:
+- 3+ years of professional experience as a full stack developer.
+- Solid experience with React, TypeScript, Python and FastAPI.
+- Familiarity with PostgreSQL and REST APIs.
+- Good written and spoken English.
+
+Rate: $25 – $35 per hour, depending on experience.
+
+To apply, reply to this post with your CV and a short note about a project you're proud of.

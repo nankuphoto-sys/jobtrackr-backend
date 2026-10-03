@@ -1,0 +1,18 @@
+Desarrollador/a Frontend Vue.js — Remoto LATAM
+
+En Mapa Verde construimos herramientas para que las ciudades midan su huella de carbono. Somos 25 personas repartidas entre México, Colombia, Chile y Argentina.
+
+Modalidad: 100% remoto desde cualquier país de Latinoamérica.
+
+Qué buscamos
+- 2 a 4 años de experiencia con Vue.js (idealmente Vue 3 y Pinia).
+- Experiencia consumiendo APIs GraphQL.
+- Conocimientos de visualización de datos (D3.js o similar).
+- Inglés intermedio-alto (B2) para reuniones con clientes.
+
+Qué ofrecemos
+- Salario a convenir, en dólares.
+- Horario flexible y 15 días de vacaciones.
+- Presupuesto anual para cursos.
+
+Si te interesa, aplica en https://mapaverde.org/trabaja-con-nosotros antes del 15 de noviembre de 2026.
