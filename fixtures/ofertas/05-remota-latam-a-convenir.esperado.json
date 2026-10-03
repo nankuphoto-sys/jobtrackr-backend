@@ -1,0 +1,12 @@
+{
+  "company": "Mapa Verde",
+  "role": "Desarrollador/a Frontend Vue.js",
+  "location": "Latinoamérica",
+  "modality": "remote",
+  "seniority": "mid",
+  "salary": { "min": null, "max": null, "currency": null, "period": null },
+  "stack": ["Vue.js", "Vue 3", "Pinia", "GraphQL", "D3.js"],
+  "language": "Inglés",
+  "applyUrl": "https://mapaverde.org/trabaja-con-nosotros",
+  "deadline": "2026-11-15"
+}

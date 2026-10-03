@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 
 const router = Router();
@@ -33,6 +34,34 @@ router.get('/:id', async (req, res) => {
   res.json(application);
 });
 
+// Campos de la oferta (los que completa el extractor o el usuario a mano).
+// Todos opcionales; en PUT, un campo ausente no se toca y `null` lo borra.
+const camposOferta = z
+  .object({
+    location: z.string().trim().max(200).nullable(),
+    modality: z.enum(['remote', 'hybrid', 'onsite']).nullable(),
+    seniority: z.enum(['junior', 'mid', 'senior']).nullable(),
+    salaryMin: z.number().int().nonnegative().nullable(),
+    salaryMax: z.number().int().nonnegative().nullable(),
+    salaryCurrency: z.string().trim().max(10).nullable(),
+    salaryPeriod: z.enum(['month', 'year', 'hour']).nullable(),
+    stack: z.array(z.string().trim().min(1).max(60)).max(40),
+    deadline: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}/)
+      .transform((d) => new Date(d))
+      .nullable(),
+    summary: z.string().trim().max(1000).nullable(),
+  })
+  .partial();
+
+function leerCamposOferta(body: unknown) {
+  const r = camposOferta.safeParse(body ?? {});
+  if (r.success) return { ok: true as const, data: r.data };
+  const i = r.error.issues[0];
+  return { ok: false as const, error: `${i.path.join('.')}: ${i.message}` };
+}
+
 router.post('/', async (req, res) => {
   const { company, role, status, link, notes, appliedAt } = req.body ?? {};
 
@@ -42,6 +71,8 @@ router.post('/', async (req, res) => {
   if (status !== undefined && !VALID_STATUSES.includes(status)) {
     return res.status(400).json({ error: `status debe ser uno de: ${VALID_STATUSES.join(', ')}` });
   }
+  const extra = leerCamposOferta(req.body);
+  if (!extra.ok) return res.status(400).json({ error: extra.error });
 
   const application = await prisma.jobApplication.create({
     data: {
@@ -51,6 +82,7 @@ router.post('/', async (req, res) => {
       link: link ?? null,
       notes: notes ?? null,
       appliedAt: appliedAt ? new Date(appliedAt) : null,
+      ...extra.data,
       userId: req.userId as string,
       statusChanges: {
         create: { fromStatus: null, toStatus: status ?? 'POR_APLICAR' },
@@ -74,6 +106,8 @@ router.put('/:id', async (req, res) => {
   if (status !== undefined && !VALID_STATUSES.includes(status)) {
     return res.status(400).json({ error: `status debe ser uno de: ${VALID_STATUSES.join(', ')}` });
   }
+  const extra = leerCamposOferta(req.body);
+  if (!extra.ok) return res.status(400).json({ error: extra.error });
 
   const newStatus = status ?? existing.status;
   const statusChanged = newStatus !== existing.status;
@@ -87,6 +121,7 @@ router.put('/:id', async (req, res) => {
       link: link !== undefined ? link : existing.link,
       notes: notes !== undefined ? notes : existing.notes,
       appliedAt: appliedAt !== undefined ? (appliedAt ? new Date(appliedAt) : null) : existing.appliedAt,
+      ...extra.data,
       ...(statusChanged && {
         statusChanges: { create: { fromStatus: existing.status, toStatus: newStatus } },
       }),

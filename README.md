@@ -18,9 +18,30 @@ API REST en Node.js + Express + TypeScript para JobTrackr, el tablero de seguimi
 4. `npm run dev` — el servidor queda en `http://localhost:4000`.
 5. Prueba `GET /health` — debería responder `{ "status": "ok" }`.
 
+## Extractor de ofertas con IA local (opcional)
+
+Pegas el texto de una oferta en el tablero y un modelo **local** ([Ollama](https://ollama.com)) extrae empresa, cargo, modalidad, salario, stack, etc. para prellenar la tarjeta. Sin costo por llamada y sin enviar la oferta a la nube. Tú revisas y editas antes de guardar.
+
+**Solo funciona con el backend corriendo en tu PC.** En producción (Render) está apagado: el modelo vive en tu computadora y Render no puede alcanzarlo. Si está apagado o Ollama no responde, la app muestra un aviso y deja llenar la tarjeta a mano.
+
+1. Instala Ollama: https://ollama.com/download (en Windows, el instalador lo deja corriendo en segundo plano).
+2. Descarga el modelo: `ollama pull qwen3:4b` (~2.5 GB; alternativa: `gemma3:4b`).
+3. En tu `.env`:
+   ```
+   AI_EXTRACTOR_ENABLED=true
+   OLLAMA_URL=http://localhost:11434
+   OLLAMA_MODEL=qwen3:4b
+   ```
+4. Reinicia `npm run dev`. `GET /ai/status` debería responder `{ "habilitado": true, "disponible": true }`.
+5. Mide el acierto y la latencia con las 5 ofertas de ejemplo: `npm run eval:extractor`.
+
+**Cómo funciona:** `POST /ai/extract-job` con `{ "text": "…" }` (máx. 15.000 caracteres) llama a `POST /api/chat` de Ollama con salida estructurada (JSON Schema en `format`, `temperature: 0`) y valida la respuesta con Zod; si no cumple el esquema reintenta una vez y si vuelve a fallar responde **422**. Si Ollama no responde en 60 s responde **503**. El endpoint **no guarda nada**. Además, empresa, link y salario solo se aceptan si aparecen en el texto: lo que el modelo devuelva y no esté en la oferta se descarta (`descartados` en la respuesta).
+
+**Ofertas de ejemplo** (`fixtures/ofertas/`): 5 ofertas **sintéticas** (empresas inventadas) que cubren español e inglés, sin salario, remota, en COP y sin nombre de empresa; cada una con su `.esperado.json`.
+
 ## Tests
 
-`npm test` (Vitest + Supertest) — tests de integración reales contra la base de `DATABASE_URL` (no mockean Prisma): registro, login, CRUD completo de `/applications`, y aislamiento entre usuarios (que el usuario B no pueda leer, editar ni borrar una postulación del usuario A). Corren contra la misma base que uses en desarrollo; en CI corren contra un Postgres efímero aparte.
+`npm test` (Vitest + Supertest) — tests de integración reales contra la base de `DATABASE_URL` (no mockean Prisma): registro, login, CRUD completo de `/applications`, y aislamiento entre usuarios (que el usuario B no pueda leer, editar ni borrar una postulación del usuario A). El extractor (`/ai/extract-job`) se prueba con Ollama **simulado** (no hace falta tenerlo instalado): extracción, reintento, 422, 503 y descarte de datos inventados. Corren contra la misma base que uses en desarrollo; en CI corren contra un Postgres efímero aparte.
 
 ## Deploy
 

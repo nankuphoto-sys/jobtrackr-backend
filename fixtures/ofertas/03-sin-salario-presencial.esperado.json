@@ -1,0 +1,12 @@
+{
+  "company": "Laboratorio Ánfora",
+  "role": "Desarrollador Python Junior",
+  "location": "Medellín",
+  "modality": "onsite",
+  "seniority": "junior",
+  "salary": { "min": null, "max": null, "currency": null, "period": null },
+  "stack": ["Python", "Django", "SQL", "PostgreSQL", "Django REST Framework", "Docker"],
+  "language": null,
+  "applyUrl": null,
+  "deadline": null
+}

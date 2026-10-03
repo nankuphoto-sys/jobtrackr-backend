@@ -1,0 +1,12 @@
+{
+  "company": "Tiendas Andinas S.A.S.",
+  "role": "Desarrollador(a) Frontend Semi-Senior",
+  "location": "Bogotá",
+  "modality": "hybrid",
+  "seniority": "mid",
+  "salary": { "min": 6500000, "max": 8000000, "currency": "COP", "period": "month" },
+  "stack": ["React", "TypeScript", "Next.js", "Tailwind CSS", "Jest", "Vitest", "Git", "Figma"],
+  "language": null,
+  "applyUrl": "https://empleos.tiendasandinas.co/vacantes/frontend-ssr",
+  "deadline": "2026-10-31"
+}

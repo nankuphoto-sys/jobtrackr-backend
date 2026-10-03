@@ -1,0 +1,23 @@
+Senior Backend Engineer (Node.js) — Northwind Labs
+
+Location: 100% remote (we hire across the Americas, UTC-3 to UTC-8)
+
+About us
+Northwind Labs builds logistics software used by more than 400 warehouses. We are a fully distributed team of 60 people.
+
+What you'll do
+- Design and build APIs in Node.js and TypeScript.
+- Own services running on AWS (Lambda, SQS, RDS).
+- Improve observability and reliability of our PostgreSQL-backed platform.
+- Mentor mid-level engineers.
+
+What we're looking for
+- 6+ years of backend experience, at least 3 with Node.js.
+- Strong SQL and PostgreSQL skills.
+- Experience with Docker and CI/CD pipelines.
+- Fluent English (all communication is in English).
+
+Compensation
+USD 70,000 – 85,000 per year, paid as a contractor, plus a home-office stipend.
+
+Apply here: https://jobs.northwindlabs.io/senior-backend-node

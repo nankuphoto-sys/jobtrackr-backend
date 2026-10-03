@@ -1,0 +1,26 @@
+Tiendas Andinas S.A.S. — Desarrollador(a) Frontend Semi-Senior
+
+¿Quiénes somos?
+En Tiendas Andinas S.A.S. llevamos 12 años conectando a pequeños comercios de Colombia con sus clientes. Hoy estamos construyendo nuestra nueva plataforma de pedidos en línea.
+
+Ubicación: Bogotá, Colombia (modalidad híbrida: 3 días en oficina en Chapinero, 2 días remoto).
+
+Lo que harás:
+- Construir y mantener la interfaz del portal de comercios.
+- Trabajar con diseño para convertir prototipos de Figma en componentes reutilizables.
+- Escribir pruebas y participar en revisiones de código.
+
+Requisitos:
+- 3 o más años de experiencia en desarrollo frontend.
+- Dominio de React y TypeScript.
+- Experiencia con Next.js y Tailwind CSS.
+- Conocimiento de pruebas con Jest o Vitest.
+- Manejo de Git.
+
+Ofrecemos:
+- Salario entre $6.500.000 y $8.000.000 COP mensuales, según experiencia.
+- Contrato a término indefinido.
+- Medicina prepagada.
+
+Recibimos hojas de vida hasta el 31 de octubre de 2026.
+Postúlate en https://empleos.tiendasandinas.co/vacantes/frontend-ssr

@@ -1,0 +1,12 @@
+{
+  "company": null,
+  "role": "Full Stack Developer (React + Python)",
+  "location": null,
+  "modality": "remote",
+  "seniority": "mid",
+  "salary": { "min": 25, "max": 35, "currency": null, "period": "hour" },
+  "stack": ["React", "TypeScript", "Python", "FastAPI", "PostgreSQL"],
+  "language": "English",
+  "applyUrl": null,
+  "deadline": null
+}
