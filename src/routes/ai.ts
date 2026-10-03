@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { configOllama, ollamaResponde, OllamaNoDisponible } from '../lib/ollama';
+import { configOllama, ollamaResponde, OllamaNoDisponible, precargarModelo } from '../lib/ollama';
 import { extraerOferta, MAX_TEXTO, OfertaInvalida } from '../lib/extraerOferta';
 
 const router = Router();
@@ -9,7 +9,11 @@ const router = Router();
 // modelo corre en la PC del usuario y Render no puede alcanzarlo.
 router.get('/status', async (_req, res) => {
   const { habilitado, model } = configOllama();
-  res.json({ habilitado, modelo: model, disponible: habilitado ? await ollamaResponde() : false });
+  const disponible = habilitado ? await ollamaResponde() : false;
+  // El frontend consulta esto al abrir "Pegar oferta": se aprovecha para cargar
+  // el modelo mientras el usuario pega el texto (evita ~40 s de arranque en frío).
+  if (disponible) precargarModelo();
+  res.json({ habilitado, modelo: model, disponible });
 });
 
 // No guarda nada: devuelve los datos extraídos para que el usuario los revise

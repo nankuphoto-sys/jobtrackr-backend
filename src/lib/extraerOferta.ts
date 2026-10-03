@@ -6,15 +6,27 @@ import { ollamaChat } from './ollama';
 
 export const MAX_TEXTO = 15000;
 
+// Las definiciones campo por campo salieron de la primera evaluación con
+// qwen3:4b (npm run eval:extractor): sin ellas confundía "presencial" con
+// remoto, "Semi-Senior" con senior y el idioma requerido con el de la oferta.
 export const SYSTEM_PROMPT = [
   'Eres un extractor de datos de ofertas de empleo. Respondes solo con el JSON pedido.',
   'Extrae solo lo que dice el texto. Si un dato no aparece, usa null o "unknown".',
   'Nunca inventes salario, empresa ni fechas.',
-  'Los salarios van como número entero, sin separadores de miles (8.000.000 → 8000000; 4k → 4000).',
-  'currency es el código ISO de la moneda (COP, USD, EUR…) solo si el texto la indica.',
-  'deadline es la fecha límite para postular, en formato YYYY-MM-DD, solo si el texto la da.',
-  'stack son tecnologías concretas (lenguajes, frameworks, herramientas). requirements son los demás requisitos.',
-  'summary: máximo 2 frases, en español, aunque la oferta esté en otro idioma.',
+  '',
+  'Campos:',
+  '- company: el nombre de la empresa EXACTAMENTE como está escrito (solo el nombre, sin el cargo ni otros textos). null si no se nombra (por ejemplo "nuestro cliente").',
+  '- role: el título del cargo tal como aparece.',
+  '- location: solo ciudad y/o país (ejemplo: "Bogotá, Colombia"). Si es una región, la región ("Latinoamérica"). null si no dice un lugar.',
+  '- modality: "onsite" si dice presencial, en oficina u on-site; "hybrid" si dice híbrido o mezcla días en oficina y remotos; "remote" si dice remoto o 100% remote; "unknown" si no lo dice.',
+  '- seniority: "junior" (junior, trainee, recién egresado, 0-2 años); "mid" (semi-senior, Ssr, mid, 2-5 años); "senior" (senior, Sr, lead, más de 5 años); "unknown" si no hay pistas.',
+  '- salary: min y max son los montos del texto copiados tal cual, solo quitando los separadores de miles. Nunca los multipliques ni los conviertas. Ejemplos: "8.000.000" → 8000000; "70,000" → 70000; "$25" → 25; "4k" → 4000. currency es el código ISO (COP, USD, EUR) solo si el texto lo escribe; el signo $ solo no indica la moneda. period: month, year u hour.',
+  '- stack: todas las tecnologías concretas que nombra, incluidas herramientas de pruebas, control de versiones y diseño (por ejemplo Jest, Git, Figma).',
+  '- requirements: los demás requisitos (años de experiencia, estudios, habilidades).',
+  '- language: el idioma que se EXIGE para el trabajo, con su nivel si lo dice (ejemplo: "Inglés B2"). null si no exige un idioma. No es el idioma en que está escrita la oferta.',
+  '- applyUrl: la URL para postular, solo si aparece una URL (no un correo).',
+  '- deadline: la fecha límite para postular en formato YYYY-MM-DD. null si no la da.',
+  '- summary: máximo 2 frases, en español, aunque la oferta esté en otro idioma.',
 ].join('\n');
 
 const nullableString = { type: ['string', 'null'] };
@@ -51,24 +63,38 @@ export const OFERTA_JSON_SCHEMA = {
   ],
 };
 
+// Valores que el modelo usa para "no hay dato" en vez de null.
+const VACIOS = new Set(['', 'null', 'none', 'n/a', 'na', 'no especificado', 'no especificada', 'unknown', 'desconocido']);
+/** Texto opcional: los "vacíos" del modelo ("", "N/A", "null"…) cuentan como null. */
+const textoOpcional = z.preprocess(
+  (v) => (typeof v === 'string' && VACIOS.has(v.trim().toLowerCase()) ? null : v),
+  z.string().trim().min(1).nullable(),
+);
+/** Fecha opcional: lo que no sea YYYY-MM-DD válido se toma como "no la da" (null), en vez de tumbar toda la extracción. */
+const fechaOpcional = z.preprocess((v) => {
+  if (typeof v !== 'string') return v ?? null;
+  const s = v.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) ? s : null;
+}, z.string().nullable());
+
 /** El mismo contrato, validado del lado del servidor (el modelo puede fallar igual). */
 export const ofertaSchema = z.object({
-  company: z.string().trim().min(1).nullable(),
+  company: textoOpcional,
   role: z.string().trim().min(1),
-  location: z.string().trim().min(1).nullable(),
+  location: textoOpcional,
   modality: z.enum(['remote', 'hybrid', 'onsite', 'unknown']),
   seniority: z.enum(['junior', 'mid', 'senior', 'unknown']),
   salary: z.object({
     min: z.number().nonnegative().nullable(),
     max: z.number().nonnegative().nullable(),
-    currency: z.string().trim().min(1).nullable(),
+    currency: textoOpcional,
     period: z.enum(['month', 'year', 'hour']).nullable(),
   }),
   stack: z.array(z.string().trim().min(1)).max(40),
   requirements: z.array(z.string().trim().min(1)).max(40),
-  language: z.string().trim().min(1).nullable(),
-  applyUrl: z.string().trim().min(1).nullable(),
-  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  language: textoOpcional,
+  applyUrl: textoOpcional,
+  deadline: fechaOpcional,
   summary: z.string().trim().max(600),
 });
 

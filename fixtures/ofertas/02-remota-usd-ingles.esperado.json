@@ -1,7 +1,7 @@
 {
   "company": "Northwind Labs",
   "role": "Senior Backend Engineer (Node.js)",
-  "location": null,
+  "location": "Americas",
   "modality": "remote",
   "seniority": "senior",
   "salary": { "min": 70000, "max": 85000, "currency": "USD", "period": "year" },

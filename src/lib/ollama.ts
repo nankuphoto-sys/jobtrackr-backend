@@ -65,6 +65,23 @@ export async function ollamaChat(params: { system: string; user: string; format:
   return data.message?.content ?? '';
 }
 
+/**
+ * Pide a Ollama que cargue el modelo en memoria (POST /api/generate sin prompt)
+ * y lo mantenga 15 minutos. La primera llamada con el modelo en frío tarda
+ * ~40 s (medido con qwen3:4b): precargarlo cuando se abre "Pegar oferta" hace
+ * que ese tiempo pase mientras el usuario pega el texto. No espera respuesta.
+ */
+export function precargarModelo(): void {
+  const { url, model } = configOllama();
+  fetch(`${url}/api/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, keep_alive: '15m' }),
+  }).catch(() => {
+    /* si falla, la extracción igual informará el problema */
+  });
+}
+
 /** Comprueba en 2 s si Ollama responde (para que el frontend sepa si mostrar el extractor). */
 export async function ollamaResponde(): Promise<boolean> {
   const { url } = configOllama();
