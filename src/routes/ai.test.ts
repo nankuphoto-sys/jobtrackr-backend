@@ -151,5 +151,12 @@ describe('POST /applications con los campos de la oferta', () => {
       .send({ company: 'X', role: 'Y', modality: 'presencial' });
     expect(malo.status).toBe(400);
     expect(malo.body.error).toMatch(/modality/);
+
+    const fechaImposible = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ company: 'X', role: 'Y', deadline: '2026-13-45' });
+    expect(fechaImposible.status).toBe(400);
+    expect(fechaImposible.body.error).toMatch(/deadline/);
   });
 });

@@ -42,9 +42,24 @@ describe('verificarContraTexto', () => {
 });
 
 describe('ofertaSchema', () => {
-  it('rechaza fechas que no son YYYY-MM-DD y modalidades fuera de la lista', () => {
-    expect(ofertaSchema.safeParse({ ...base, deadline: '15/10/2026' }).success).toBe(false);
+  it('rechaza modalidades fuera de la lista', () => {
     expect(ofertaSchema.safeParse({ ...base, modality: 'presencial' }).success).toBe(false);
     expect(ofertaSchema.safeParse(base).success).toBe(true);
+  });
+
+  // En la primera evaluación real, qwen3:4b devolvió una fecha inválida en una
+  // oferta sin fecha límite y eso tumbaba toda la extracción (422).
+  it('toma una fecha mal escrita como "no la da" (null) en vez de fallar', () => {
+    for (const deadline of ['15/10/2026', '', 'N/A', 'no especificada', '2026-13-45']) {
+      const r = ofertaSchema.safeParse({ ...base, deadline });
+      expect(r.success).toBe(true);
+      expect(r.success && r.data.deadline).toBeNull();
+    }
+    expect(ofertaSchema.parse({ ...base, deadline: '2026-10-31' }).deadline).toBe('2026-10-31');
+  });
+
+  it('convierte los "vacíos" del modelo en null', () => {
+    const r = ofertaSchema.parse({ ...base, company: 'N/A', language: '', location: 'null', applyUrl: 'none' });
+    expect(r).toMatchObject({ company: null, language: null, location: null, applyUrl: null });
   });
 });

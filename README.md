@@ -37,6 +37,16 @@ Pegas el texto de una oferta en el tablero y un modelo **local** ([Ollama](https
 
 **Cómo funciona:** `POST /ai/extract-job` con `{ "text": "…" }` (máx. 15.000 caracteres) llama a `POST /api/chat` de Ollama con salida estructurada (JSON Schema en `format`, `temperature: 0`) y valida la respuesta con Zod; si no cumple el esquema reintenta una vez y si vuelve a fallar responde **422**. Si Ollama no responde en 60 s responde **503**. El endpoint **no guarda nada**. Además, empresa, link y salario solo se aceptan si aparecen en el texto: lo que el modelo devuelva y no esté en la oferta se descarta (`descartados` en la respuesta).
 
+**Resultados medidos** (`qwen3:4b`, RTX 4060 Ti 16 GB, 3 de octubre de 2026):
+
+| Corrida | Acierto | Inventados | Tiempo por oferta | Qué cambió |
+|---|---|---|---|---|
+| 1ª | 40/48 (83 %) | 0 | ~4 s (43 s la primera, con el modelo en frío) | Prompt corto. Confundía "presencial" con remoto, "Semi-Senior" con senior y el idioma requerido con el de la oferta; una oferta falló entera por una fecha inválida |
+| 2ª | 52/60 (87 %) | 0 | ~3,5 s | Definiciones campo por campo; fechas inválidas y "N/A" → null; precarga del modelo. El modelo multiplicó salarios por 100 (70.000 → 7.000.000): **la comprobación contra el texto los descartó** |
+| 3ª | 59/60 (98 %) | 0 | ~3 s | Ejemplos de salario con comas y "nunca los multipliques" (y la oferta 2 esperando la región "Americas", coherente con la regla de ubicación) |
+
+Lo que queda: con "$25" sin moneda escrita, el modelo infiere "USD". No es un dato inventado (el monto está en el texto), pero conviene revisarlo en el formulario.
+
 **Ofertas de ejemplo** (`fixtures/ofertas/`): 5 ofertas **sintéticas** (empresas inventadas) que cubren español e inglés, sin salario, remota, en COP y sin nombre de empresa; cada una con su `.esperado.json`.
 
 ## Tests

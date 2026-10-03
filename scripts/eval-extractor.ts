@@ -34,6 +34,16 @@ function parecido(esperado: unknown, obtenido: unknown) {
   return a === b || a.includes(b) || b.includes(a);
 }
 
+// Idioma requerido: "English" e "Inglés B2" son el mismo idioma. Antes solo se
+// comparaba si estaba vacío o no, y daba por bueno "es" cuando se esperaba inglés.
+const IDIOMAS: Record<string, string> = { english: 'ingles', ingles: 'ingles', spanish: 'espanol', espanol: 'espanol', es: 'espanol', en: 'ingles' };
+function mismoIdioma(esperado: string | null, obtenido: string | null) {
+  if (esperado === null) return obtenido === null;
+  if (obtenido === null) return false;
+  const clave = (s: string) => IDIOMAS[norm(s).split(' ')[0]] ?? norm(s).split(' ')[0];
+  return clave(esperado) === clave(obtenido);
+}
+
 function cobertura(esperado: string[], obtenido: string[]) {
   if (!esperado.length) return 1;
   const got = obtenido.map(norm);
@@ -43,6 +53,13 @@ function cobertura(esperado: string[], obtenido: string[]) {
 async function main() {
   const { model, url } = configOllama();
   console.log(`Modelo: ${model} en ${url}\n`);
+
+  // Calentamiento: la primera llamada con el modelo en frío lo carga en memoria
+  // (~40 s con qwen3:4b). En la app eso lo absorbe la precarga de GET /ai/status;
+  // aquí se mide aparte para que no cuente contra el criterio de 15 s por oferta.
+  const t0 = Date.now();
+  await extraerOferta('Acme busca Desarrollador Junior.').catch(() => null);
+  console.log(`Arranque en frío (carga del modelo): ${Date.now() - t0} ms\n`);
 
   const archivos = readdirSync(DIR).filter((f) => f.endsWith('.txt')).sort();
   let inventadosTotal = 0;
@@ -77,7 +94,7 @@ async function main() {
       ['salary.max', esperado.salary.max, o.salary.max, esperado.salary.max === o.salary.max],
       ['salary.currency', esperado.salary.currency, o.salary.currency, parecido(esperado.salary.currency, o.salary.currency)],
       ['salary.period', esperado.salary.period, o.salary.period, esperado.salary.period === o.salary.period],
-      ['language', esperado.language, o.language, (esperado.language === null) === (o.language === null)],
+      ['language', esperado.language, o.language, mismoIdioma(esperado.language, o.language)],
       ['applyUrl', esperado.applyUrl, o.applyUrl, parecido(esperado.applyUrl, o.applyUrl)],
       ['deadline', esperado.deadline, o.deadline, esperado.deadline === o.deadline],
     ];

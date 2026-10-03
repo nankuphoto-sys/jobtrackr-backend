@@ -49,6 +49,8 @@ const camposOferta = z
     deadline: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}/)
+      // El formato solo no alcanza: "2026-13-45" pasaba y Prisma fallaba con 500.
+      .refine((d) => !Number.isNaN(Date.parse(d)), 'fecha inválida')
       .transform((d) => new Date(d))
       .nullable(),
     summary: z.string().trim().max(1000).nullable(),
