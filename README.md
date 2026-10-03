@@ -47,6 +47,8 @@ Pegas el texto de una oferta en el tablero y un modelo **local** ([Ollama](https
 
 Lo que queda: con "$25" sin moneda escrita, el modelo infiere "USD". No es un dato inventado (el monto está en el texto), pero conviene revisarlo en el formulario.
 
+**Puntaje de encaje (fase 2):** copia `profile.example.json` a `profile.json` (está en `.gitignore`) y pon tu stack, las modalidades que aceptas y tu seniority. El tablero lo lee con `GET /ai/perfil` y muestra un puntaje de 0 a 100 en el formulario de "Pegar oferta" y en cada tarjeta que tenga stack. El puntaje se calcula en código, no con el modelo (`lib/encaje.ts` en el frontend): stack 70 pts (% de la oferta que manejas, con "Node.js" = "nodejs" = "Node"), modalidad 15 y seniority 15 (la mitad si está a un nivel de distancia). Lo que la oferta no dice no cuenta en contra. Los cambios en `profile.json` se ven sin reiniciar. Sin el archivo (producción) responde `{ "perfil": null }` y no aparece puntaje.
+
 **Ofertas de ejemplo** (`fixtures/ofertas/`): 5 ofertas **sintéticas** (empresas inventadas) que cubren español e inglés, sin salario, remota, en COP y sin nombre de empresa; cada una con su `.esperado.json`.
 
 ## Tests

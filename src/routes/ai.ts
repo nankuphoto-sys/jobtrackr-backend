@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { configOllama, ollamaResponde, OllamaNoDisponible, precargarModelo } from '../lib/ollama';
 import { extraerOferta, MAX_TEXTO, OfertaInvalida } from '../lib/extraerOferta';
+import { leerPerfil, PerfilInvalido } from '../lib/perfil';
 
 const router = Router();
 
@@ -14,6 +15,19 @@ router.get('/status', async (_req, res) => {
   // el modelo mientras el usuario pega el texto (evita ~40 s de arranque en frío).
   if (disponible) precargarModelo();
   res.json({ habilitado, modelo: model, disponible });
+});
+
+// Perfil para el puntaje de encaje. El puntaje se calcula en el frontend
+// (lib/encaje.ts) porque cambia en vivo al editar el stack y se muestra en
+// cada tarjeta. `perfil: null` = no hay profile.json (producción).
+router.get('/perfil', async (_req, res) => {
+  try {
+    res.json({ perfil: await leerPerfil() });
+  } catch (err) {
+    // Express 4 no atrapa errores de handlers async: relanzar dejaría la request colgada.
+    const mensaje = err instanceof PerfilInvalido ? err.message : 'No se pudo leer profile.json.';
+    res.status(500).json({ error: mensaje });
+  }
 });
 
 // No guarda nada: devuelve los datos extraídos para que el usuario los revise
