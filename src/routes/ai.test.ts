@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import request from 'supertest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { app } from '../app';
 import { uniqueEmail, cleanupTestUsers } from '../test-helpers';
 
@@ -128,6 +131,44 @@ describe('GET /ai/status', () => {
     const res = await request(app).get('/ai/status').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ habilitado: true, disponible: true });
+  });
+});
+
+describe('GET /ai/perfil', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'jobtrackr-perfil-'));
+  const pedir = () => request(app).get('/ai/perfil').set('Authorization', `Bearer ${token}`);
+  afterEach(() => { delete process.env.PROFILE_PATH; });
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  it('pide login', async () => {
+    expect((await request(app).get('/ai/perfil')).status).toBe(401);
+  });
+
+  it('devuelve perfil null si no hay profile.json (producción)', async () => {
+    process.env.PROFILE_PATH = join(dir, 'no-existe.json');
+    const res = await pedir();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ perfil: null });
+  });
+
+  it('devuelve el perfil validado', async () => {
+    const perfil = { stack: ['React', 'Node.js'], modality: ['remote'], seniority: 'junior' };
+    process.env.PROFILE_PATH = join(dir, 'ok.json');
+    writeFileSync(process.env.PROFILE_PATH, JSON.stringify(perfil));
+    const res = await pedir();
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ perfil });
+  });
+
+  it('responde 500 con un mensaje claro si profile.json está mal escrito', async () => {
+    process.env.PROFILE_PATH = join(dir, 'roto.json');
+    writeFileSync(process.env.PROFILE_PATH, '{ "stack": [');
+    expect((await pedir()).body.error).toMatch(/no es JSON válido/);
+
+    writeFileSync(process.env.PROFILE_PATH, JSON.stringify({ stack: ['React'], modality: ['remoto'], seniority: 'junior' }));
+    const res = await pedir();
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/modality/);
   });
 });
 
