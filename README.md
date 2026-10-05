@@ -53,7 +53,7 @@ Lo que queda: con "$25" sin moneda escrita, el modelo infiere "USD". No es un da
 
 ## Tests
 
-`npm test` (Vitest + Supertest) — tests de integración reales contra la base de `DATABASE_URL` (no mockean Prisma): registro, login, CRUD completo de `/applications`, y aislamiento entre usuarios (que el usuario B no pueda leer, editar ni borrar una postulación del usuario A). El extractor (`/ai/extract-job`) se prueba con Ollama **simulado** (no hace falta tenerlo instalado): extracción, reintento, 422, 503 y descarte de datos inventados. Corren contra la misma base que uses en desarrollo; en CI corren contra un Postgres efímero aparte.
+`npm test` (Vitest + Supertest) — tests de integración reales contra la base de `DATABASE_URL` (no mockean Prisma): registro, login, CRUD completo de `/applications`, la fecha del último cambio de estado y la ruta de seguimiento, y aislamiento entre usuarios (que el usuario B no pueda leer, editar ni borrar una postulación del usuario A). El extractor (`/ai/extract-job`) se prueba con Ollama **simulado** (no hace falta tenerlo instalado): extracción, reintento, 422, 503 y descarte de datos inventados. Corren contra la misma base que uses en desarrollo; en CI corren contra un Postgres efímero aparte.
 
 ## Deploy
 
@@ -72,3 +72,5 @@ Desplegado en **Render** (Web Service, plan Free), conectado al repo de GitHub p
 **Fase 5 completada:** deploy en Render (ver arriba). CORS configurable vía `FRONTEND_URL` y build script que corre `prisma generate` (necesario para que el cliente de Prisma no quede desactualizado en un build limpio). `bcrypt` actualizado a 6.0.0 por una vulnerabilidad crítica en una dependencia transitiva (`node-tar` vía `node-pre-gyp`).
 
 **Pulido post-Fase 5:** 19 tests de integración (Vitest + Supertest) cubriendo auth y CRUD de `/applications`, corriendo también en CI contra un Postgres real efímero. `src/app.ts` se separó de `src/index.ts` (la app de Express sin el `.listen()`) específicamente para poder testearla con Supertest sin levantar un puerto. Monitoreo de errores en producción con **Sentry** (`src/instrument.ts`, cargado antes que cualquier otro módulo).
+
+**Fase 6 completada (recordatorios de seguimiento):** cada postulación trae `statusChangedAt` (desde cuándo está en su estado, sacado del historial `StatusChange`) y `lastFollowUpAt`. `POST /applications/:id/follow-up` registra un "Hice seguimiento" sin cambiar el estado. Con eso, el tablero calcula qué postulaciones necesitan atención.

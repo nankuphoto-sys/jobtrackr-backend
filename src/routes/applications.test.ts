@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../app';
 import { uniqueEmail, cleanupTestUsers } from '../test-helpers';
+import { prisma } from '../lib/prisma';
 
 const emails: string[] = [];
 function testEmail(prefix: string) {
@@ -211,5 +212,84 @@ describe('DELETE /applications/:id', () => {
       .get(`/applications/${created.body.id}`)
       .set('Authorization', `Bearer ${tokenA}`);
     expect(after.status).toBe(404);
+  });
+});
+
+describe('statusChangedAt (recordatorios)', () => {
+  it('viene en la respuesta y avanza solo cuando cambia el estado', async () => {
+    const created = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'RecordCo', role: 'Dev' });
+    expect(created.body.statusChangedAt).toEqual(expect.any(String));
+    expect(created.body.statusChanges).toBeUndefined();
+
+    const sinCambio = await request(app)
+      .put(`/applications/${created.body.id}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ notes: 'solo una nota' });
+    expect(sinCambio.body.statusChangedAt).toBe(created.body.statusChangedAt);
+
+    const conCambio = await request(app)
+      .put(`/applications/${created.body.id}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ status: 'APLICADO' });
+    expect(Date.parse(conCambio.body.statusChangedAt)).toBeGreaterThan(Date.parse(created.body.statusChangedAt));
+
+    const lista = await request(app).get('/applications').set('Authorization', `Bearer ${tokenA}`);
+    const enLista = lista.body.find((a: { id: string }) => a.id === created.body.id);
+    expect(enLista.statusChangedAt).toBe(conCambio.body.statusChangedAt);
+  });
+
+  it('sin historial (postulaciones viejas) usa appliedAt', async () => {
+    const ref = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'Ref', role: 'Dev' });
+    const vieja = await prisma.jobApplication.create({
+      data: { company: 'Vieja', role: 'Dev', status: 'APLICADO', appliedAt: new Date('2026-01-10'), userId: ref.body.userId },
+    });
+
+    const res = await request(app).get(`/applications/${vieja.id}`).set('Authorization', `Bearer ${tokenA}`);
+    expect(res.body.statusChangedAt).toBe('2026-01-10T00:00:00.000Z');
+  });
+});
+
+describe('POST /applications/:id/follow-up', () => {
+  it('guarda la fecha del seguimiento sin cambiar el estado ni el historial', async () => {
+    const created = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'FollowCo', role: 'Dev', status: 'APLICADO' });
+    expect(created.body.lastFollowUpAt).toBeNull();
+
+    const res = await request(app)
+      .post(`/applications/${created.body.id}/follow-up`)
+      .set('Authorization', `Bearer ${tokenA}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.lastFollowUpAt).toEqual(expect.any(String));
+    expect(res.body.status).toBe('APLICADO');
+    expect(res.body.statusChangedAt).toBe(created.body.statusChangedAt);
+  });
+
+  it('el usuario B no puede marcar seguimiento en una postulación del usuario A', async () => {
+    const created = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'Ajena', role: 'Dev' });
+
+    const res = await request(app)
+      .post(`/applications/${created.body.id}/follow-up`)
+      .set('Authorization', `Bearer ${tokenB}`);
+    expect(res.status).toBe(404);
+
+    const deA = await request(app).get(`/applications/${created.body.id}`).set('Authorization', `Bearer ${tokenA}`);
+    expect(deA.body.lastFollowUpAt).toBeNull();
+  });
+
+  it('rechaza sin token con 401', async () => {
+    const res = await request(app).post('/applications/cualquiera/follow-up');
+    expect(res.status).toBe(401);
   });
 });

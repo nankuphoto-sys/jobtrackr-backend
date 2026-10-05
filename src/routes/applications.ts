@@ -6,12 +6,34 @@ const router = Router();
 
 const VALID_STATUSES = ['POR_APLICAR', 'APLICADO', 'ENTREVISTA', 'OFERTA', 'RECHAZADO'];
 
+// Trae solo el último cambio de estado de cada postulación (no el historial
+// entero) para los recordatorios del tablero.
+const ultimoCambio = {
+  statusChanges: { orderBy: { changedAt: 'desc' }, take: 1, select: { changedAt: true } },
+} as const;
+
+/**
+ * Agrega `statusChangedAt` (desde cuándo está en su estado actual) y quita el
+ * array de statusChanges. Las postulaciones creadas antes de que existiera el
+ * historial no tienen ningún cambio: se usa appliedAt o createdAt.
+ */
+function conFechaDeEstado<T extends { appliedAt: Date | null; createdAt: Date; statusChanges: { changedAt: Date }[] }>(
+  application: T,
+) {
+  const { statusChanges, ...resto } = application;
+  return {
+    ...resto,
+    statusChangedAt: statusChanges[0]?.changedAt ?? application.appliedAt ?? application.createdAt,
+  };
+}
+
 router.get('/', async (req, res) => {
   const applications = await prisma.jobApplication.findMany({
     where: { userId: req.userId },
     orderBy: { createdAt: 'desc' },
+    include: ultimoCambio,
   });
-  res.json(applications);
+  res.json(applications.map(conFechaDeEstado));
 });
 
 // Alimenta el embudo de conversión y el tiempo promedio por estado en /account
@@ -27,11 +49,12 @@ router.get('/status-history', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const application = await prisma.jobApplication.findFirst({
     where: { id: req.params.id, userId: req.userId },
+    include: ultimoCambio,
   });
   if (!application) {
     return res.status(404).json({ error: 'Postulación no encontrada' });
   }
-  res.json(application);
+  res.json(conFechaDeEstado(application));
 });
 
 // Campos de la oferta (los que completa el extractor o el usuario a mano).
@@ -90,9 +113,10 @@ router.post('/', async (req, res) => {
         create: { fromStatus: null, toStatus: status ?? 'POR_APLICAR' },
       },
     },
+    include: ultimoCambio,
   });
 
-  res.status(201).json(application);
+  res.status(201).json(conFechaDeEstado(application));
 });
 
 router.put('/:id', async (req, res) => {
@@ -128,9 +152,27 @@ router.put('/:id', async (req, res) => {
         statusChanges: { create: { fromStatus: existing.status, toStatus: newStatus } },
       }),
     },
+    include: ultimoCambio,
   });
 
-  res.json(application);
+  res.json(conFechaDeEstado(application));
+});
+
+// "Hice seguimiento": reinicia el recordatorio sin cambiar el estado.
+router.post('/:id/follow-up', async (req, res) => {
+  const existing = await prisma.jobApplication.findFirst({
+    where: { id: req.params.id, userId: req.userId },
+  });
+  if (!existing) {
+    return res.status(404).json({ error: 'Postulación no encontrada' });
+  }
+
+  const application = await prisma.jobApplication.update({
+    where: { id: existing.id },
+    data: { lastFollowUpAt: new Date() },
+    include: ultimoCambio,
+  });
+  res.json(conFechaDeEstado(application));
 });
 
 router.delete('/:id', async (req, res) => {
