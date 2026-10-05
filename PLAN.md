@@ -41,6 +41,11 @@ Enfoque de aprendizaje: Jonta está aprendiendo a programar mientras construye e
 
 9. **Pulido post-Fase 5 — Tipos de React.** ✅ Completado (frontend). `@types/react` había quedado en v18 desde antes de migrar a React 19 (Fase 2), y `@types/react-dom` nunca se instaló. No rompía nada, pero podía dar tipos sutilmente incorrectos. Corregido.
 
+10. **Fase 6 — Recordatorios de seguimiento.** ✅ Completada (el detalle de la UI y las reglas está en el PLAN del frontend).
+    - Todas las respuestas que devuelven una postulación traen `statusChangedAt`, **derivado** del último `StatusChange` (`include` con `orderBy: desc` + `take: 1`: una sola consulta para todo el tablero). Las postulaciones de antes del historial usan `appliedAt` o `createdAt`. No se agregó una columna para esto, porque duplicaría el historial y podría desincronizarse.
+    - Campo nuevo `lastFollowUpAt` (migración `recordatorio_seguimiento`, un `ADD COLUMN` opcional) y `POST /applications/:id/follow-up`, que lo pone en ahora sin cambiar el estado ni el historial.
+    - 5 tests de integración nuevos: la fecha solo avanza al cambiar de estado, respaldo sin historial, seguimiento, aislamiento entre usuarios (404) y 401 sin token.
+
 ## Pendiente (no hecho todavía)
 
 - **Dominio propio**: Jonta ya tiene un dominio comprado (lo usa para otro proyecto, "RIME") y preguntó si se puede reusar para JobTrackr — sí, vía subdominio (ej. `jobtrackr.sudominio.com` para el frontend, sin tocar lo que ya tiene en la raíz). Falta que confirme el nombre exacto del dominio para configurar los registros DNS en Vercel/Render.
