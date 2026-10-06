@@ -1,6 +1,7 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
+import { calcularRecordatorio, zonaHorariaValida } from '../lib/recordatorios';
 
 const router = Router();
 
@@ -12,19 +13,34 @@ const ultimoCambio = {
   statusChanges: { orderBy: { changedAt: 'desc' }, take: 1, select: { changedAt: true } },
 } as const;
 
+type ConUltimoCambio = {
+  status: string;
+  appliedAt: Date | null;
+  createdAt: Date;
+  lastFollowUpAt: Date | null;
+  deadline: Date | null;
+  statusChanges: { changedAt: Date }[];
+};
+
 /**
- * Agrega `statusChangedAt` (desde cuándo está en su estado actual) y quita el
- * array de statusChanges. Las postulaciones creadas antes de que existiera el
- * historial no tienen ningún cambio: se usa appliedAt o createdAt.
+ * Agrega `statusChangedAt` (desde cuándo está en su estado actual) y `aviso`
+ * (el recordatorio de hoy, o null), y quita el array de statusChanges. Las
+ * postulaciones creadas antes de que existiera el historial no tienen ningún
+ * cambio: se usa appliedAt o createdAt.
  */
-function conFechaDeEstado<T extends { appliedAt: Date | null; createdAt: Date; statusChanges: { changedAt: Date }[] }>(
-  application: T,
-) {
+function conFechaDeEstado<T extends ConUltimoCambio>(application: T, zonaHoraria: string) {
   const { statusChanges, ...resto } = application;
+  const statusChangedAt = statusChanges[0]?.changedAt ?? application.appliedAt ?? application.createdAt;
   return {
     ...resto,
-    statusChangedAt: statusChanges[0]?.changedAt ?? application.appliedAt ?? application.createdAt,
+    statusChangedAt,
+    aviso: calcularRecordatorio({ ...application, statusChangedAt }, new Date(), zonaHoraria),
   };
+}
+
+/** Zona horaria del usuario (header X-Timezone que manda el frontend). */
+function zonaDe(req: Request): string {
+  return zonaHorariaValida(req.get('X-Timezone'));
 }
 
 router.get('/', async (req, res) => {
@@ -33,7 +49,8 @@ router.get('/', async (req, res) => {
     orderBy: { createdAt: 'desc' },
     include: ultimoCambio,
   });
-  res.json(applications.map(conFechaDeEstado));
+  const zona = zonaDe(req);
+  res.json(applications.map((a) => conFechaDeEstado(a, zona)));
 });
 
 // Alimenta el embudo de conversión y el tiempo promedio por estado en /account
@@ -54,7 +71,7 @@ router.get('/:id', async (req, res) => {
   if (!application) {
     return res.status(404).json({ error: 'Postulación no encontrada' });
   }
-  res.json(conFechaDeEstado(application));
+  res.json(conFechaDeEstado(application, zonaDe(req)));
 });
 
 // Campos de la oferta (los que completa el extractor o el usuario a mano).
@@ -116,7 +133,7 @@ router.post('/', async (req, res) => {
     include: ultimoCambio,
   });
 
-  res.status(201).json(conFechaDeEstado(application));
+  res.status(201).json(conFechaDeEstado(application, zonaDe(req)));
 });
 
 router.put('/:id', async (req, res) => {
@@ -155,7 +172,7 @@ router.put('/:id', async (req, res) => {
     include: ultimoCambio,
   });
 
-  res.json(conFechaDeEstado(application));
+  res.json(conFechaDeEstado(application, zonaDe(req)));
 });
 
 // "Hice seguimiento": reinicia el recordatorio sin cambiar el estado.
@@ -172,7 +189,7 @@ router.post('/:id/follow-up', async (req, res) => {
     data: { lastFollowUpAt: new Date() },
     include: ultimoCambio,
   });
-  res.json(conFechaDeEstado(application));
+  res.json(conFechaDeEstado(application, zonaDe(req)));
 });
 
 router.delete('/:id', async (req, res) => {
