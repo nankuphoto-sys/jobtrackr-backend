@@ -45,6 +45,7 @@ Enfoque de aprendizaje: Jonta está aprendiendo a programar mientras construye e
     - Todas las respuestas que devuelven una postulación traen `statusChangedAt`, **derivado** del último `StatusChange` (`include` con `orderBy: desc` + `take: 1`: una sola consulta para todo el tablero). Las postulaciones de antes del historial usan `appliedAt` o `createdAt`. No se agregó una columna para esto, porque duplicaría el historial y podría desincronizarse.
     - Campo nuevo `lastFollowUpAt` (migración `recordatorio_seguimiento`, un `ADD COLUMN` opcional) y `POST /applications/:id/follow-up`, que lo pone en ahora sin cambiar el estado ni el historial.
     - 5 tests de integración nuevos: la fecha solo avanza al cambiar de estado, respaldo sin historial, seguimiento, aislamiento entre usuarios (404) y 401 sin token.
+    - **Reglas movidas al backend (antes de la Fase 7):** `src/lib/recordatorios.ts` (umbrales en `UMBRALES`, 10 tests) calcula el `aviso` de cada postulación, que va en todas las respuestas. La fecha límite se cuenta en la zona horaria del usuario (header `X-Timezone`, validado; si falta o es inválido, UTC): Render corre en UTC y desde las 7 p. m. en Colombia ya sería "mañana". 4 tests de integración más, incluido que CORS deje pasar `X-Timezone`.
 
 ## Pendiente (no hecho todavía)
 

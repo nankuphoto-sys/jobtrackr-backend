@@ -293,3 +293,58 @@ describe('POST /applications/:id/follow-up', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('aviso (recordatorio calculado en el backend)', () => {
+  /** Fecha "YYYY-MM-DD" de dentro de N días en una zona horaria. */
+  function fechaEn(zona: string, dias: number): string {
+    const d = new Date(Date.now() + dias * 24 * 60 * 60 * 1000);
+    return new Intl.DateTimeFormat('en-CA', { timeZone: zona, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  }
+
+  it('viene en la respuesta y usa la zona horaria de X-Timezone', async () => {
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .set('X-Timezone', 'America/Bogota')
+      .send({ company: 'CierreCo', role: 'Dev', deadline: fechaEn('America/Bogota', 1) });
+
+    expect(res.body.aviso).toEqual({ tipo: 'cierre', dias: 1, texto: 'Cierra mañana' });
+  });
+
+  it('es null cuando no hace falta aviso', async () => {
+    const res = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'SinAvisoCo', role: 'Dev', status: 'APLICADO' });
+
+    expect(res.body.aviso).toBeNull();
+  });
+
+  it('una postulación vieja sin respuesta avisa, y el seguimiento lo quita', async () => {
+    const ref = await request(app)
+      .post('/applications')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ company: 'Ref2', role: 'Dev' });
+    const vieja = await prisma.jobApplication.create({
+      data: { company: 'ViejaCo', role: 'Dev', status: 'APLICADO', appliedAt: new Date('2026-01-10'), userId: ref.body.userId },
+    });
+
+    const antes = await request(app).get(`/applications/${vieja.id}`).set('Authorization', `Bearer ${tokenA}`);
+    expect(antes.body.aviso).toMatchObject({ tipo: 'sin-respuesta' });
+
+    const despues = await request(app)
+      .post(`/applications/${vieja.id}/follow-up`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(despues.body.aviso).toBeNull();
+  });
+
+  it('el navegador puede mandar X-Timezone (CORS)', async () => {
+    const res = await request(app)
+      .options('/applications')
+      .set('Origin', 'http://localhost:3000')
+      .set('Access-Control-Request-Method', 'GET')
+      .set('Access-Control-Request-Headers', 'authorization,x-timezone');
+
+    expect(res.headers['access-control-allow-headers']).toMatch(/x-timezone/i);
+  });
+});
