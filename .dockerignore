@@ -1,0 +1,11 @@
+# Lo que nunca debe entrar a la imagen: dependencias locales, compilados viejos y secretos.
+node_modules
+dist
+.env
+.env.*
+!.env.example
+.git
+.github
+coverage
+profile.json
+*.log
