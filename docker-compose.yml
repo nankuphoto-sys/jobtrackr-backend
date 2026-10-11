@@ -1,0 +1,36 @@
+# Levanta la API y un PostgreSQL local con un solo comando:
+#   docker compose up --build
+# La API queda en http://localhost:4000 y la base en localhost:5433 (5433 para no chocar con un Postgres ya instalado).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: jobtrackr
+      POSTGRES_PASSWORD: jobtrackr
+      POSTGRES_DB: jobtrackr
+    ports:
+      - "5433:5432"
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobtrackr -d jobtrackr"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy # espera a que Postgres acepte conexiones antes de migrar
+    environment:
+      # Dentro de la red de Docker, la base se llama "db" (el nombre del servicio), no "localhost".
+      DATABASE_URL: postgresql://jobtrackr:jobtrackr@db:5432/jobtrackr?schema=public
+      JWT_SECRET: solo-para-desarrollo-local-cambiar-en-produccion
+      PORT: "4000"
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "4000:4000"
+
+volumes:
+  datos-postgres:
