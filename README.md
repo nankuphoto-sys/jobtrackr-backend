@@ -18,6 +18,21 @@ API REST en Node.js + Express + TypeScript para JobTrackr, el tablero de seguimi
 4. `npm run dev` — el servidor queda en `http://localhost:4000`.
 5. Prueba `GET /health` — debería responder `{ "status": "ok" }`.
 
+## Correr con Docker
+
+Levanta la API y un PostgreSQL propio sin instalar nada más que [Docker Desktop](https://www.docker.com/products/docker-desktop/):
+
+```bash
+docker compose up --build
+```
+
+- La API queda en `http://localhost:4000` (prueba `GET /health`) y aplica las migraciones sola al arrancar.
+- La base queda en `localhost:5433` (usuario, clave y base: `jobtrackr`); los datos persisten en el volumen `datos-postgres`.
+- Para correr los tests contra esa base: `DATABASE_URL="postgresql://jobtrackr:jobtrackr@localhost:5433/jobtrackr?schema=public" JWT_SECRET=pruebas npm test`.
+- `docker compose down` la apaga; `docker compose down -v` además borra los datos.
+
+**Cómo está armada la imagen** (`Dockerfile`): dos etapas. La primera instala todas las dependencias, genera el cliente de Prisma para Linux y compila TypeScript; la segunda copia solo `dist/`, las dependencias de producción y las migraciones, corre como usuario sin privilegios (`node`) y tiene un healthcheck sobre `/health`. El CI construye la imagen en cada push para que no se rompa sin darnos cuenta.
+
 ## Extractor de ofertas con IA local (opcional)
 
 Pegas el texto de una oferta en el tablero y un modelo **local** ([Ollama](https://ollama.com)) extrae empresa, cargo, modalidad, salario, stack, etc. para prellenar la tarjeta. Sin costo por llamada y sin enviar la oferta a la nube. Tú revisas y editas antes de guardar.
